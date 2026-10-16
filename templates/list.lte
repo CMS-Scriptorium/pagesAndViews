@@ -1,0 +1,98 @@
+{% autoescape false %}
+
+<div id="droplets" class="container">
+<div class="pag_title">Groups Pages > Frontend Access (viewing_groups)</div>
+<form id="pageAndViewForm" name="PAV_FORM" class="ui form" action="{{ action }}" method="post">
+    <input type="hidden" name="leptoken" value="{{ leptoken }}" />
+    <table class="pag_table">
+    <thead>
+        <tr>
+            <td class="pag_row">&nbsp;</td>
+            <td class="pag_row">&nbsp;</td>
+        {% for g in allGroups %}
+            <td class="pag_row group_title">{{ g.name }}</td>
+        {% endfor %}
+        </tr>
+        
+        <tr>
+            <td class="pag_row"></td>
+            <td class="pag_row">&nbsp;</td>
+    {% for g in allGroups %}
+            <td class="pag_row">
+                {% if (g.group_id > 1) %}<input name="main_col{{ g.group_id }}" onclick="toggleColumn({{ g.group_id }}, this);" type="checkbox" value="0" >{% endif %}
+            </td>
+    {% endfor %}
+        </tr>
+    
+    </thead>
+    <tbody>
+{% macro display_pageblock( page, allGroups, deep, page_url ) %}
+    <tr>
+        <td class="pag_row page_row_deep_{{ deep }}">
+        <a href="{{ page_url }}{{ page.page_id }}">{{ page.page_title }}</a>{% if (page.subpages|length > 0) %} <i class="caret down icon"></i>{% endif %}
+        </td>
+        <td class="pag_row">
+            {% if ( page.visibility == 'public' ) %}
+            <i class="ui icon unhide" title="{{ TEXT.PUBLIC }}"></i>
+            {% elseif ( page.visibility == 'private' ) %}
+            <i class="ui icon user" title="{{ TEXT.PRIVATE }}"></i>
+            {% elseif ( page.visibility == 'registered' ) %}
+            <i class="ui icon sign in" title="{{ TEXT.REGISTERED }}"></i>
+            {% elseif ( page.visibility == 'hidden' ) %}
+            <i class="ui icon hide" title="{{ TEXT.HIDDEN }}"></i>
+            {% elseif ( page.visibility == 'none' ) %}
+            <i class="ui icon lock" title="{{ TEXT.NONE }}"></i>
+            {% elseif ( page.visibility == 'deleted') %}
+            <i class="ui icon recycle red" title="{{ TEXT.DELETED }}"></i>
+            {% endif %}
+        </td>
+    {% for g in allGroups %}
+        <td class="pag_row pag_col_{% if(loop.index % 2) %}1{% else %}2{% endif %}">
+        {% if ((page.visibility == "private") ||(page.visibility == "registered")) %}
+            <input name="viewing_groups[{{ page.page_id }}][]" class="checkPAV{{ g.group_id }}" id="{{ page.page_id }}_{{ g.group_id }}" type="checkbox" value="{{ g.group_id }}" {% if (g.group_id in page.viewing_groups) %}checked='checked'{% endif %} {% if (g.group_id == 1) %}disabled='disabled'{% endif %}>
+        {% endif %}
+        </td>
+    {% endfor %}
+    </tr>
+    {% if (page.subpages|length > 0) %}
+        {% import _self as menu_ref %}
+        {% for subpage in page.subpages %}
+            {{ menu_ref.display_pageblock( subpage, allGroups, deep + 1, page_url ) }}
+        {% endfor %}
+    {% endif %}
+{% endmacro %}
+
+{% import _self as menu_ref %}
+{% for page in pageTree %}
+    {{ menu_ref.display_pageblock( page, allGroups, 0, page_url ) }}
+{% endfor %}
+
+    </tbody>
+    </table>
+    <div class="column spacer1"></div>
+    <div class="column">
+        <button class="floated positive ui button" type="submit" >{{ TEXT.SAVE }}</button>
+        <button class="floated ui button orange" type="reset" >{{ TEXT.RESET }}</button>
+    </div>	
+
+<form>
+
+</div>
+<script>
+
+let tempLeptoken = "leptokh=#-!leptoken-!#".split("=");
+let nowLeptoken = tempLeptoken [1];
+// console.log("Leptoken: "+nowLeptoken);
+let ref = document.getElementById("pageAndViewForm");
+if(ref) {
+    ref.leptoken.value = nowLeptoken;
+    console.log("Leptoken: "+ref.leptoken.value);
+}
+
+function toggleColumn(num, selectRef) {
+    let check_boxes = $(".checkPAV"+num);
+    check_boxes.prop("checked", selectRef.checked);
+}
+
+</script>
+{% endautoescape %}
